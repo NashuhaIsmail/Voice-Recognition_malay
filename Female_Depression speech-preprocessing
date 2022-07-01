@@ -1,0 +1,61 @@
+#female only, audio file already done for silence removal and noise reduction using audacity
+
+from glob import glob
+
+#directories of files
+data_female='G:/My Drive/voice/combined/'
+audio_female= glob(data_female + '*.wav')
+
+import librosa
+from librosa import feature
+import numpy as np
+
+#create the function for extraction
+
+fn_list_i = [
+    feature.chroma_stft,
+    feature.spectral_centroid,
+    feature.spectral_bandwidth,
+    feature.spectral_rolloff,
+]
+
+fn_list_ii=[
+    feature.zero_crossing_rate,
+    feature.rms,
+    feature.tempogram
+]
+
+#produce feature vector or parametric representation.it take mean for all the reading
+
+def get_feature_vector (y,sr):
+    feat_vect_i = [np.mean(funct(y,sr)) for funct in fn_list_i]
+    feat_vect_ii = [np.mean(funct(y)) for funct in fn_list_ii]
+    
+    feature_vector = feat_vect_i + feat_vect_ii
+    return feature_vector
+  
+ 
+ #convert sound to numpy array
+audio_feat=[]
+for file in audio_female:
+    y,sr = librosa.load(file,sr=22050)
+    feature_vector = get_feature_vector (y,sr)
+    audio_feat.append(feature_vector)
+    print('.',end="")
+import csv
+fr_output = 'FE_male_female.csv'
+
+header =[
+    'chroma_stft',
+    'spectral_centroid',
+    'spectral_bandwidth',
+    'spectral_rolloff',
+    'zero_crossing_rate',
+    'rms',
+    'tempogram'
+]
+
+with open (fr_output, '+w')as f:
+    csv_writer = csv.writer (f,delimiter = ',')
+    csv_writer.writerow(header)
+    csv_writer.writerows(audio_feat)
